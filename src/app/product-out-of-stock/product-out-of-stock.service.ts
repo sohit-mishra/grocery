@@ -13,7 +13,7 @@ export class ProductOutOfStockService {
     const skip = (page - 1) * limit;
 
     const productsOutOfStock = await this.productModel
-      .find({ 'variant.productStock': 0 })
+      .find({ 'variant.productStock': { $lte: 0 } }) 
       .select({ 
         variant: 0, 
         subCategoryId: 0, 
@@ -26,12 +26,12 @@ export class ProductOutOfStockService {
       .exec();
 
     const total = await this.productModel
-      .countDocuments({ 'variant.productStock': 0 })
+      .countDocuments({ 'variant.productStock': { $lte: 0 } })
       .exec();
 
     return {
       data: productsOutOfStock,
-      total: total,
+      total,
     };
   }
 }

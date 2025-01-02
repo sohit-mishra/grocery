@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Put, Post, Param, Body, Query } from '@nestjs/common';
+import { Controller, Delete, Get, Put, Post, Param, Body, Query, HttpStatus, NotFoundException } from '@nestjs/common';
 import { BannersService } from './banners.service';
 import { CreateBannerDto } from './dto/create-banner.dto';
 import { UpdateBannerDto } from './dto/update-banner.dto';
@@ -8,11 +8,16 @@ export class BannersController {
   constructor(private readonly bannerService: BannersService) {}
 
   @Get('/list')
-  async findAll(@Query('page') page: number, @Query('limit') limit:number) {
-    const banners = await this.bannerService.findAll(page, limit);
+  async findAll(
+    @Query('page') page: number = 1, 
+    @Query('limit') limit: number = 10, 
+    @Query('q') search: string = ''
+  ) {
+    const banners = await this.bannerService.findAll(page, limit, search);
     return {
-      response_code: 200,
-      response_data: banners,
+      response_code: HttpStatus.OK,
+      response_data: banners.data,
+      total: banners.total,
     };
   }
 
@@ -20,13 +25,10 @@ export class BannersController {
   async findOne(@Param('id') id: string) {
     const banner = await this.bannerService.findOne(id);
     if (!banner) {
-      return {
-        response_code: 404,
-        response_data: 'Banner not found',
-      };
+      throw new NotFoundException('Banner not found');
     }
     return {
-      response_code: 200,
+      response_code: HttpStatus.OK,
       response_data: banner,
     };
   }
@@ -35,9 +37,8 @@ export class BannersController {
   async createOne(@Body() createBannerDto: CreateBannerDto) {
     const banner = await this.bannerService.createOne(createBannerDto);
     return {
-      response_code: 201,
-      response_data: 'Banner created successfully',
-      data: banner,
+      response_code: HttpStatus.CREATED,
+      response_data: 'Banner created successfully'
     };
   }
 
@@ -48,13 +49,10 @@ export class BannersController {
   ) {
     const updatedBanner = await this.bannerService.updateOne(id, updateBannerDto);
     if (!updatedBanner) {
-      return {
-        response_code: 404,
-        response_data: 'Banner not found or update failed',
-      };
+      throw new NotFoundException('Banner not found or update failed');
     }
     return {
-      response_code: 200,
+      response_code: HttpStatus.OK,
       response_data: 'Banner updated successfully',
     };
   }
@@ -63,13 +61,10 @@ export class BannersController {
   async delete(@Param('id') id: string) {
     const deletedBanner = await this.bannerService.delete(id);
     if (!deletedBanner) {
-      return {
-        response_code: 404,
-        response_data: 'Banner not found or deletion failed',
-      };
+      throw new NotFoundException('Banner not found or deletion failed');
     }
     return {
-      response_code: 200,
+      response_code: HttpStatus.OK,
       response_data: 'Banner deleted successfully',
     };
   }

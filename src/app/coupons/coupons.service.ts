@@ -11,19 +11,14 @@ export class CouponsService {
     @InjectModel(Coupons.name) private readonly couponsModel: Model<Coupons>,
   ) {}
 
-  async findAll(page: number, limit: number) {
+  async findAll(page: number, limit: number, search: string) {
     const skip = (page - 1) * limit;
-    const coupons = await this.couponsModel.find().skip(skip).limit(limit).exec();
-    const total = await this.couponsModel.countDocuments().exec();
-    return { data: coupons, total };
-  }
+    const filter = search ? { title: { $regex: search, $options: 'i' } } : {};
 
-  async findOne(id: string) {
-    const coupon = await this.couponsModel.findById(id).exec();
-    if (!coupon) {
-      throw new NotFoundException(`Coupon with ID ${id} not found`);
-    }
-    return coupon;
+    const coupons = await this.couponsModel.find(filter).skip(skip).limit(limit).exec();
+    const total = await this.couponsModel.countDocuments(filter).exec();
+    
+    return { coupons, total };
   }
 
   async createOne(createCouponDto: CreateCouponDto) {

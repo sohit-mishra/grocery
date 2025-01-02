@@ -19,6 +19,6 @@ export class CreateCouponDto {
   @IsInt()
   expiryDate: number;
 
-  @IsEnum(['Percentage', 'Amount'])
+  @IsEnum(['PERCENTAGE', 'AMOUNT'])
   couponType: string;
 }

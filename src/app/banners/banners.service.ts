@@ -11,11 +11,13 @@ export class BannersService {
     @InjectModel(Banner.name) private readonly bannerModel: Model<Banner>,
   ) {}
 
-  async findAll(page: number = 1, limit: number = 10) {
+  async findAll(page: number = 1, limit: number = 10, search: string = '') {
     const skip = (page - 1) * limit;
-    const banners = await this.bannerModel.find().skip(skip).limit(limit).exec();
-    const total = await this.bannerModel.countDocuments().exec();
-
+    const query = search
+      ? { title: { $regex: search, $options: 'i' } }
+      : {};
+    const banners = await this.bannerModel.find(query).skip(skip).limit(limit).exec();
+    const total = await this.bannerModel.countDocuments(query).exec();
     return {
       data: banners,
       total,

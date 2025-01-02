@@ -171,8 +171,9 @@ export class UsersService {
     if (!file) {
       throw new BadRequestException(`File is required`);
     }
-    const { filePath, fileUrl, fileId } =
-      await this.storageService.uploadFile(file);
+    const { filePath, fileUrl, fileId } = await this.storageService.uploadFile(
+      file,
+    );
     return { filePath, fileUrl, fileId };
   }
 }

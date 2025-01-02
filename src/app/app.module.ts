@@ -9,6 +9,12 @@ import { BannersModule } from './banners/banners.module';
 import { SubCategoryModule } from './sub-category/sub-category.module';
 import { ProductOutOfStockModule } from './product-out-of-stock/product-out-of-stock.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { DealsModule } from './deals/deals.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { DeliveryBoyModule } from './delivery-boy/delivery-boy.module';
+import { BusinessModule } from './business/business.module';
+import { PagesModule } from './pages/pages.module';
+import { LanguagesModule } from './languages/languages.module';
 
 @Module({
   imports: [
@@ -16,10 +22,13 @@ import { CouponsModule } from './coupons/coupons.module';
     UsersModule,
     BannersModule,
     CategoriesModule,
-
+    NotificationsModule,
     CouponsModule,
-
-
+    DeliveryBoyModule,
+    BusinessModule,
+    DealsModule,
+    PagesModule,
+    LanguagesModule,
     ProductOutOfStockModule,
     ProductsModule,
     SubCategoryModule,
