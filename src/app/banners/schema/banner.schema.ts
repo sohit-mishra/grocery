@@ -1,12 +1,12 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 export enum BannerType {
-  Category = 'Category',
-  Banner = 'Banner',
+  CATEGORY = 'CATEGORY',
+  PRODUCT = 'PRODUCT',
 }
 
-@Schema()
+@Schema({ timestamps: true })
 export class Banner extends Document {
   @Prop({ required: true })
   title: string;
@@ -17,10 +17,11 @@ export class Banner extends Document {
   @Prop({ required: true, enum: BannerType })
   bannerType: BannerType;
 
-  @Prop({ index: true })
+  
+  @Prop({ index: true, sparse: true })
   categoryId?: string;
 
-  @Prop({ index: true })
+  @Prop({ index: true, sparse: true })
   productId?: string;
 
   @Prop({ required: true })
@@ -29,11 +30,14 @@ export class Banner extends Document {
   @Prop()
   filePath?: string;
 
-  @Prop({ required: true, index: true })
-  categoryName: string;
+  @Prop()
+  categoryName?: string;
+
+  @Prop()
+  productName?: string;
 
   @Prop({ default: false })
-  isDeleted?: boolean;
+  status?: boolean;
 }
 
 export const BannerSchema = SchemaFactory.createForClass(Banner);

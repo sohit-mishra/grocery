@@ -4,6 +4,14 @@ import { Banner } from './schema/banner.schema';
 import { Model } from 'mongoose';
 import { CreateBannerDto } from './dto/create-banner.dto';
 import { UpdateBannerDto } from './dto/update-banner.dto';
+import {
+  AllBannerResponse,
+  TypeBannerResponse,
+  OneBannerResponse,
+  CreateBannerResponse,
+  UpdateBannerResponse,
+  DeleteBannerResponse,
+} from './dto/response.dto';
 
 @Injectable()
 export class BannersService {
@@ -13,17 +21,21 @@ export class BannersService {
 
   async findAll(page: number = 1, limit: number = 10, search: string = '') {
     const skip = (page - 1) * limit;
-    const query = search
-      ? { title: { $regex: search, $options: 'i' } }
-      : {};
-    const banners = await this.bannerModel.find(query).skip(skip).limit(limit).exec();
+    const query = search ? { title: { $regex: search, $options: 'i' } } : {};
+    const banners = await this.bannerModel
+      .find(query)
+      .skip(skip)
+      .limit(limit)
+      .exec();
     const total = await this.bannerModel.countDocuments(query).exec();
-    return {
-      data: banners,
-      total,
-      page,
-      limit,
+
+    const response: AllBannerResponse = {
+      response_code: 200,
+      response_data: banners,
+      total: total,
     };
+
+    return response;
   }
 
   async findOne(id: string) {
@@ -31,22 +43,57 @@ export class BannersService {
     if (!banner) {
       throw new NotFoundException('Banner not found');
     }
-    return banner;
+
+    const response: OneBannerResponse = {
+      response_code: 200,
+      response_data: banner,
+    };
+
+    return response;
   }
 
-  async createOne(createBannerDto: CreateBannerDto) {
-    const newBanner = new this.bannerModel(createBannerDto);
-    return await newBanner.save();
+  async findlist(): Promise<TypeBannerResponse> {
+    const data ={
+      CATEGORY: 'CATEGORY',
+      PRODUCT: 'PRODUCT',
+    }; 
+    const response: TypeBannerResponse = {
+      response_code: 200,
+      response_data: data,
+    };
+    return response;
   }
 
-  async updateOne(id: string, updateBannerDto: UpdateBannerDto) {
+  async createOne(body: CreateBannerDto): Promise<CreateBannerResponse> {
+    const newBanner = new this.bannerModel(body);
+    await newBanner.save();
+
+    const response: CreateBannerResponse = {
+      response_code: 200,
+      response_data: 'Banner saved successfully',
+    };
+
+    return response;
+  }
+
+  async updateOne(
+    id: string,
+    body: UpdateBannerDto,
+  ): Promise<UpdateBannerResponse> {
     const updatedBanner = await this.bannerModel
-      .findByIdAndUpdate(id, updateBannerDto, { new: true })
+      .findByIdAndUpdate(id, body, { new: true })
       .exec();
+
     if (!updatedBanner) {
       throw new NotFoundException('Banner not found or update failed');
     }
-    return updatedBanner;
+
+    const response: UpdateBannerResponse = {
+      response_code: 200,
+      response_data: 'Banner updated successfully',
+    };
+
+    return response;
   }
 
   async delete(id: string) {
@@ -54,6 +101,11 @@ export class BannersService {
     if (!deletedBanner) {
       throw new NotFoundException('Banner not found or deletion failed');
     }
-    return deletedBanner;
+    const response: DeleteBannerResponse = {
+      response_code: 200,
+      response_data: 'Banner deleted successfully',
+    };
+
+    return response;
   }
 }

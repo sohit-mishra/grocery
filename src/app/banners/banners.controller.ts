@@ -1,7 +1,15 @@
-import { Controller, Delete, Get, Put, Post, Param, Body, Query, HttpStatus, NotFoundException } from '@nestjs/common';
+import { Controller, Delete, Get, Put, Post, Param, Body, Query } from '@nestjs/common';
 import { BannersService } from './banners.service';
 import { CreateBannerDto } from './dto/create-banner.dto';
 import { UpdateBannerDto } from './dto/update-banner.dto';
+import {
+  AllBannerResponse,
+  TypeBannerResponse,
+  OneBannerResponse,
+  CreateBannerResponse,
+  UpdateBannerResponse,
+  DeleteBannerResponse,
+} from './dto/response.dto';
 
 @Controller('banners/admin')
 export class BannersController {
@@ -9,63 +17,38 @@ export class BannersController {
 
   @Get('/list')
   async findAll(
-    @Query('page') page: number = 1, 
-    @Query('limit') limit: number = 10, 
-    @Query('q') search: string = ''
-  ) {
-    const banners = await this.bannerService.findAll(page, limit, search);
-    return {
-      response_code: HttpStatus.OK,
-      response_data: banners.data,
-      total: banners.total,
-    };
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('q') search: string = '',
+  ): Promise<AllBannerResponse> {
+    return await this.bannerService.findAll(page, limit, search);
   }
 
-  @Get('/details/:id')
-  async findOne(@Param('id') id: string) {
-    const banner = await this.bannerService.findOne(id);
-    if (!banner) {
-      throw new NotFoundException('Banner not found');
-    }
-    return {
-      response_code: HttpStatus.OK,
-      response_data: banner,
-    };
+  @Get('/type/list')
+  async findlist(): Promise<TypeBannerResponse> {
+    return await this.bannerService.findlist();
+  }
+
+  @Get('/detail/:id')
+  async findOne(@Param('id') id: string): Promise<OneBannerResponse> {
+    return await this.bannerService.findOne(id);
   }
 
   @Post('/create')
-  async createOne(@Body() createBannerDto: CreateBannerDto) {
-    const banner = await this.bannerService.createOne(createBannerDto);
-    return {
-      response_code: HttpStatus.CREATED,
-      response_data: 'Banner created successfully'
-    };
+  async createOne(@Body() body: CreateBannerDto): Promise<CreateBannerResponse> {
+    return await this.bannerService.createOne(body);
   }
 
   @Put('/update/:id')
   async updateOne(
     @Param('id') id: string,
-    @Body() updateBannerDto: UpdateBannerDto,
-  ) {
-    const updatedBanner = await this.bannerService.updateOne(id, updateBannerDto);
-    if (!updatedBanner) {
-      throw new NotFoundException('Banner not found or update failed');
-    }
-    return {
-      response_code: HttpStatus.OK,
-      response_data: 'Banner updated successfully',
-    };
+    @Body() body: UpdateBannerDto,
+  ): Promise<UpdateBannerResponse> {
+    return await this.bannerService.updateOne(id, body);
   }
 
   @Delete('/delete/:id')
-  async delete(@Param('id') id: string) {
-    const deletedBanner = await this.bannerService.delete(id);
-    if (!deletedBanner) {
-      throw new NotFoundException('Banner not found or deletion failed');
-    }
-    return {
-      response_code: HttpStatus.OK,
-      response_data: 'Banner deleted successfully',
-    };
+  async delete(@Param('id') id: string): Promise<DeleteBannerResponse> {
+    return await this.bannerService.delete(id);
   }
 }

@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsUrl } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsUrl,
+  IsBoolean,
+  IsIn,
+  ValidateIf
+} from 'class-validator';
+
 
 export class CreateBannerDto {
   @IsString()
@@ -9,14 +17,19 @@ export class CreateBannerDto {
   description?: string;
 
   @IsString()
+  @IsIn(['PRODUCT', 'CATEGORY'], {
+    message: 'bannerType must be either PRODUCT or CATEGORY',
+  })
   bannerType: string;
 
   @IsString()
   @IsOptional()
+  @ValidateIf((o) => !o.productId) 
   categoryId?: string;
 
   @IsString()
   @IsOptional()
+  @ValidateIf((o) => !o.categoryId) 
   productId?: string;
 
   @IsUrl()
@@ -27,5 +40,23 @@ export class CreateBannerDto {
   filePath?: string;
 
   @IsString()
-  categoryName: string;
+  imageId: string;
+
+  @IsBoolean()
+  status: boolean;
+
+  @IsString()
+  @IsOptional()
+  categoryName?: string;
+
+  @IsString()
+  @IsOptional()
+  productName?: string;
+}
+
+
+
+export class CreateBannerResponse {
+  response_code: number;
+  response_data: string;
 }
