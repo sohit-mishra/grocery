@@ -3,9 +3,9 @@ import { IsString, IsNotEmpty } from 'class-validator';
 export class CreateNotificationsDto {
   @IsString()
   @IsNotEmpty()
-  body: string;
+  title: string;
 
   @IsString()
   @IsNotEmpty()
-  title: string;
+  body: string;
 }

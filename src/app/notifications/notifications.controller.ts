@@ -1,6 +1,11 @@
 import { Controller, Get, Post, Query, Body, HttpStatus } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationsDto } from './dto/create-notifications.dto';
+import {
+  AllNotificationsResponse,
+  OneNotificationsResponse,
+  CreateNotificationsResponse,ReadNotificationsResponse
+} from './dto/response.dto';
 
 @Controller('notifications/admin/')
 export class NotificationsController {
@@ -9,32 +14,28 @@ export class NotificationsController {
   @Get('list')
   async findAll(
     @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10
-  ) {
-    const notifications = await this.notificationsService.findAll(page, limit);
-    return {
-      response_code: HttpStatus.OK,
-      response_data: notifications.data,
-      total: notifications.total
-    };
+    @Query('limit') limit: number = 10,
+  ): Promise<AllNotificationsResponse> {
+    return await this.notificationsService.findAll(page, limit);
+  }
+
+  @Get('latest')
+  async findOne():Promise<OneNotificationsResponse>{
+    return await this.notificationsService.findOne();
   }
 
   @Post('read')
-  async findOne(@Body() body: { notificationId: string }) {
+  async ReadOne(@Body() body: { notificationId: string }): Promise<
+    ReadNotificationsResponse
+  > {
     const notificationId = body.notificationId;
-    const notification = await this.notificationsService.findOne(notificationId);
-    return {
-      response_code: HttpStatus.OK,
-      response_data: notification,
-    };
+    return await this.notificationsService.ReadOne(notificationId);
   }
 
   @Post('send')
-  async createOne(@Body() createNotificationsDto: CreateNotificationsDto) {
-    const notification = await this.notificationsService.createOne(createNotificationsDto);
-    return {
-      response_code: HttpStatus.CREATED,
-      response_data: 'Push notification sent successfully',
-    };
+  async createOne(
+    @Body() createNotificationsDto: CreateNotificationsDto,
+  ): Promise<CreateNotificationsResponse> {
+    return await this.notificationsService.createOne(createNotificationsDto);
   }
 }

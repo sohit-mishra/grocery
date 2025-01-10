@@ -7,13 +7,16 @@ export class Notifications extends Document {
   title: string;
 
   @Prop({ required: true })
-  body: string;
+  description: string;
 
   @Prop({ required: true, default: Date.now })
   createdAt: Date;
 
   @Prop({ default: false })
-  status: boolean;
+  isRead: boolean;
+
+  @Prop({ required: true })
+  notifyType: string;
 }
 
 export const NotificationsSchema = SchemaFactory.createForClass(Notifications);
