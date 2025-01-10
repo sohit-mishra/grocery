@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Banner } from './schema/banner.schema';
+import { Product } from '@app/products/schema/product.schema';
+import { Categories } from '@app/categories/schema/categories.schema';
 import { Model } from 'mongoose';
 import { CreateBannerDto } from './dto/create-banner.dto';
 import { UpdateBannerDto } from './dto/update-banner.dto';
@@ -17,16 +19,33 @@ import {
 export class BannersService {
   constructor(
     @InjectModel(Banner.name) private readonly bannerModel: Model<Banner>,
+    @InjectModel(Categories.name) private readonly CategoryModel: Model<Categories>,
+    @InjectModel(Product.name) private readonly productModel: Model<Product>
   ) {}
 
   async findAll(page: number = 1, limit: number = 10, search: string = '') {
     const skip = (page - 1) * limit;
     const query = search ? { title: { $regex: search, $options: 'i' } } : {};
+
     const banners = await this.bannerModel
       .find(query)
       .skip(skip)
       .limit(limit)
+      .select('-createdAt -updatedAt -__v')
       .exec();
+    
+    for (let banner of banners) {
+      if (banner.categoryId) {
+        const category = await this.CategoryModel.findById(banner.categoryId);
+        banner.categoryName = category ? category.title : null;
+      }
+
+      if (banner.productId) {
+        const product = await this.productModel.findById(banner.productId);
+        banner.productName = product ? product.title : null;
+      }
+    }
+
     const total = await this.bannerModel.countDocuments(query).exec();
 
     const response: AllBannerResponse = {
@@ -39,21 +58,31 @@ export class BannersService {
   }
 
   async findOne(id: string) {
-    const banner = await this.bannerModel.findById(id).exec();
+    const banner = await this.bannerModel.findById(id).select('-createdAt -updatedAt -__v -status');
     if (!banner) {
       throw new NotFoundException('Banner not found');
     }
-
+  
+    if (banner.categoryId) {
+      const category = await this.CategoryModel.findById(banner.categoryId);
+      banner.categoryName = category ? category.title : null;
+    }
+  
+    if (banner.productId) {
+      const product = await this.productModel.findById(banner.productId);
+      banner.productName = product ? product.title : null;
+    }
+  
     const response: OneBannerResponse = {
       response_code: 200,
       response_data: banner,
     };
-
+  
     return response;
   }
 
   async findlist(): Promise<TypeBannerResponse> {
-    const data ={
+    const data = {
       CATEGORY: 'CATEGORY',
       PRODUCT: 'PRODUCT',
     }; 
