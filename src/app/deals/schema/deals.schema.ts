@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 @Schema()
 export class Deals extends Document {
@@ -9,17 +9,20 @@ export class Deals extends Document {
   @Prop()
   description?: string;
 
-  @Prop({ required: true })
-  categoryId: string;
+  @Prop()
+  categoryId?: string;
 
-  @Prop({ required: true })
-  categoryName: string;
+  @Prop()
+  categoryName?: string;
 
   @Prop({ required: true, enum: ['CATEGORY', 'PRODUCT'] })
   dealType: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, min: 0 })
   dealPercent: number;
+
+  @Prop({ required: true })
+  imageId: string;
 
   @Prop()
   productId?: string;

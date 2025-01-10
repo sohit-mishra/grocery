@@ -10,9 +10,6 @@ export class CreateDealsDto {
   @IsOptional()
   categoryId?: string;
 
-  @IsString()
-  categoryName: string;
-
   @IsNumber()
   dealPercent: number;
 
@@ -29,7 +26,7 @@ export class CreateDealsDto {
 
   @IsString()
   @IsOptional()
-  imageId?: string;
+  imageId: string;
 
   @IsUrl()
   imageUrl: string;

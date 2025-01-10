@@ -1,9 +1,27 @@
-import { Controller, Delete, Get, Put, Post, Param, Body, Query, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Put,
+  Post,
+  Param,
+  Body,
+  Query
+} from '@nestjs/common';
 import { CreateDealsDto } from './dto/create-deals.dto';
 import { UpdateDealsDto } from './dto/update-deals.dto';
 import { DealsService } from './deals.service';
+import {
+  AllDealsResponse,
+  OneDealsResponse,
+  CreateDealsResponse,
+  TypeDealsResponse,
+  StatusUpdateDealsResponse,
+  UpdateDealsResponse,
+  DeleteDealsResponse,
+} from './dto/response.dto';
 
-@Controller('deals/admin')
+@Controller('deals/admin/')
 export class DealsController {
   constructor(private readonly dealsService: DealsService) {}
 
@@ -12,48 +30,44 @@ export class DealsController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('q') search: string = '',
-  ) {
-    const deals = await this.dealsService.findAll({ page, limit, search });
-    return {
-      response_code: HttpStatus.OK,
-      response_data: deals.deals,
-      total:deals.total
-    };
+  ): Promise<AllDealsResponse> {
+    return await this.dealsService.findAll({ page, limit, search });
   }
 
   @Get('detail/:id')
-  async findOne(@Param('id') id: string) {
-    const deal = await this.dealsService.findOne(id);
-    return {
-      response_code: HttpStatus.OK,
-      response_data: deal,
-    };
+  async findOne(@Param('id') id: string): Promise<OneDealsResponse> {
+    return await this.dealsService.findOne(id);
+  }
+
+  @Get('type/list')
+  async findlist(): Promise<TypeDealsResponse> {
+    return await this.dealsService.findlist();
   }
 
   @Post('create')
-  async createOne(@Body() createDealsDto: CreateDealsDto) {
-    await this.dealsService.createOne(createDealsDto);
-    return {
-      response_code: HttpStatus.CREATED,
-      response_data: 'Deal created successfully',
-    };
+  async createOne(@Body() createDealsDto: CreateDealsDto):Promise<CreateDealsResponse> {
+    return await this.dealsService.createOne(createDealsDto);
   }
 
   @Put('update/:id')
-  async updateOne(@Param('id') id: string, @Body() updateDealsDto: UpdateDealsDto) {
-    const updatedDeal = await this.dealsService.updateOne(id, updateDealsDto);
-    return {
-      response_code: HttpStatus.OK,
-      response_data: 'Deal updated successfully',
-    };
+  async updateOne(
+    @Param('id') id: string,
+    @Body() updateDealsDto: UpdateDealsDto,
+  ):Promise<UpdateDealsResponse> {
+    return await this.dealsService.updateOne(id, updateDealsDto);
+  }
+
+  @Put('/status-update/:id')
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() statusDto: { status: boolean },
+  ):Promise<StatusUpdateDealsResponse> {
+    const { status } = statusDto;
+    return await this.dealsService.updateStatus(id, status);
   }
 
   @Delete('delete/:id')
-  async deleteOne(@Param('id') id: string) {
-    await this.dealsService.deleteOne(id);
-    return {
-      response_code: HttpStatus.OK,
-      response_data: 'Deal Deleted successfully',
-    };
+  async deleteOne(@Param('id') id: string):Promise<DeleteDealsResponse> {
+    return await this.dealsService.deleteOne(id);
   }
 }
