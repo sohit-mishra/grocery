@@ -14,6 +14,9 @@ export class SubCategory extends Document {
 
   @Prop({ default: true })
   status: boolean;
+
+  @Prop()
+  categoryName?: string;
 }
 
 export const SubCategorySchema = SchemaFactory.createForClass(SubCategory);
