@@ -1,89 +1,103 @@
-import { Controller, Delete, Put, Get, Post, Query, Param, Body, BadRequestException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Put,
+  Get,
+  Post,
+  Delete,
+  Query,
+  Param,
+  Body,
+  UploadedFile,
+  BadRequestException,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategories } from './dto/create-categories.dto';
 import { UpdateCategories } from './dto/update-categories.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { StorageService } from '@core/services/storage.service';
+import {
+  AllCategoriesResponse,
+  DropdownCategoriesResponse,
+  OneCategoriesResponse,
+  CreateCategoriesResponse,
+  UpdateCategoriesResponse,
+  UpdateStatusCategoriesResponse,
+  DeleteCategoriesResponse,
+  ImageCategoriesResponse,
+} from './dto/response.dto';
 
 @Controller('categories/admin')
 export class CategoriesController {
-  constructor(private readonly categoriesService: CategoriesService) {}
+  constructor(
+    private readonly categoriesService: CategoriesService,
+    private readonly storageService: StorageService,
+  ) {}
 
   @Get('/list')
   async findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
     @Query('q') search: string = '',
-  ) {
-    const pageNumber = parseInt(page, 10) || 1;
-    const limitNumber = parseInt(limit, 10) || 10;
-
+  ): Promise<AllCategoriesResponse> {
+    const pageNumber = Math.max(parseInt(page, 10), 1);
+    const limitNumber = Math.min(Math.max(parseInt(limit, 10), 1), 100);
 
     if (search && !search.trim()) {
-      throw new BadRequestException('Search query cannot be empty');
+      throw new Error('Search query cannot be empty');
     }
 
-    const result = await this.categoriesService.findAll(pageNumber, limitNumber, search);
+    return this.categoriesService.findAll(pageNumber, limitNumber, search);
+  }
 
-    return {
-      response_code: HttpStatus.OK,
-      response_data: result.data,
-      total: result.total,
-    };
+  @Get('/dropdown-list')
+  async findDropdownList(): Promise<DropdownCategoriesResponse> {
+    return this.categoriesService.getDropdownList();
   }
 
   @Get('/detail/:id')
-  async findOne(@Param('id') id: string) {
-    const result = await this.categoriesService.findOne(id);
-    if (!result) {
-      return {
-        response_code: HttpStatus.NOT_FOUND,
-        response_data: 'Category not found',
-      };
-    }
-
-    return {
-      response_code: HttpStatus.OK,
-      response_data: result,
-    };
+  async findOne(@Param('id') id: string): Promise<OneCategoriesResponse> {
+    return this.categoriesService.findOne(id);
   }
 
   @Post('/create')
-  async createOne(@Body() createCategoryDto: CreateCategories) {
-    const result = await this.categoriesService.create(createCategoryDto);
-    return {
-      response_code: HttpStatus.CREATED,
-      response_data: 'Category saved successfully',
-    };
+  async createOne(
+    @Body() createCategoryDto: CreateCategories,
+  ): Promise<CreateCategoriesResponse> {
+    return this.categoriesService.create(createCategoryDto);
+  }
+
+  @Post('/upload/image')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ImageCategoriesResponse> {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    return await this.categoriesService.uploadImage(file);
   }
 
   @Put('/update/:id')
-  async updateOne(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategories) {
-    const result = await this.categoriesService.update(id, updateCategoryDto);
-    if (!result) {
-      return {
-        response_code: HttpStatus.NOT_FOUND,
-        response_data: 'Category not found or update failed',
-      };
-    }
+  async updateOne(
+    @Param('id') id: string,
+    @Body() update: UpdateCategories,
+  ): Promise<UpdateCategoriesResponse> {
+    return this.categoriesService.update(id, update);
+  }
 
-    return {
-      response_code: HttpStatus.OK,
-      response_data: 'Category updated successfully',
-    };
+  @Put('/status-update/:id')
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() statusDto: { status: boolean },
+  ): Promise<UpdateStatusCategoriesResponse> {
+    const { status } = statusDto;
+    return this.categoriesService.updateStatus(id, status);
   }
 
   @Delete('/delete/:id')
-  async deleteOne(@Param('id') id: string) {
-    const result = await this.categoriesService.remove(id);
-    if (!result) {
-      return {
-        response_code: HttpStatus.NOT_FOUND,
-        response_data: 'Category not found or deletion failed',
-      };
-    }
-
-    return {
-      response_code: HttpStatus.OK,
-      response_data: 'Category deleted successfully',
-    };
+  async deleteOne(@Param('id') id: string): Promise<DeleteCategoriesResponse> {
+    return this.categoriesService.delete(id);
   }
 }
