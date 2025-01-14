@@ -10,7 +10,7 @@ import { Deals, DealsSchema } from '@app/deals/schema/deals.schema';
 import {
   Categories,
   CategoriesSchema,
-} from '@app/categories/schema/categories.schema';
+} from '@app/categories/categories.model';
 
 @Module({
   imports: [

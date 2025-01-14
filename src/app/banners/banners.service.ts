@@ -1,113 +1,111 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Banner } from './schema/banner.schema';
-import { Product } from '@app/products/schema/product.schema';
-import { Categories } from '@app/categories/schema/categories.schema';
+import { Banner } from './banner.model';
+import { Product } from '@app/products/product.model';
+import { Categories } from '@app/categories/categories.model';
 import { Model } from 'mongoose';
-import { CreateBannerDto } from './dto/create-banner.dto';
-import { UpdateBannerDto } from './dto/update-banner.dto';
-import {
-  AllBannerResponse,
-  TypeBannerResponse,
-  OneBannerResponse,
-  CreateBannerResponse,
-  UpdateBannerResponse,
-  DeleteBannerResponse,
-} from './dto/response.dto';
+import { CreateBannerDto, CreateBannerResponse } from './dto/create-banner.dto';
+import { UpdateBannerParam, UpdateBannerResponse, UpdateBodyBanner } from './dto/update-banner.dto';
+import { DeleteBannerParam, DeleteBannerResponse } from './dto/delete-banner.dto';
+import { TypeBannerResponse } from './dto/type-banner.dto';
+import { OneBannerParam, OneBannerResponse } from './dto/one-banner.dto';
+import { AllBannerResponse, AllBannerQuery } from './dto/All-banner.dto';
 
 @Injectable()
 export class BannersService {
   constructor(
     @InjectModel(Banner.name) private readonly bannerModel: Model<Banner>,
-    @InjectModel(Categories.name) private readonly CategoryModel: Model<Categories>,
-    @InjectModel(Product.name) private readonly productModel: Model<Product>
+    @InjectModel(Categories.name) private readonly categoryModel: Model<Categories>,
+    @InjectModel(Product.name) private readonly productModel: Model<Product>,
   ) {}
 
-  async findAll(page: number = 1, limit: number = 10, search: string = '') {
+  async findAll(query: AllBannerQuery): Promise<AllBannerResponse> {
+    const { page = 1, limit = 10, q = '' } = query;
     const skip = (page - 1) * limit;
-    const query = search ? { title: { $regex: search, $options: 'i' } } : {};
+    const searchQuery = q ? { title: { $regex: q, $options: 'i' } } : {};
 
     const banners = await this.bannerModel
-      .find(query)
+      .find(searchQuery)
       .skip(skip)
       .limit(limit)
       .select('-createdAt -updatedAt -__v')
       .exec();
-    
-    for (let banner of banners) {
+
+    for (const banner of banners) {
       if (banner.categoryId) {
-        const category = await this.CategoryModel.findById(banner.categoryId);
+        const category = await this.categoryModel.findById(banner.categoryId).exec();
         banner.categoryName = category ? category.title : null;
       }
-
       if (banner.productId) {
-        const product = await this.productModel.findById(banner.productId);
+        const product = await this.productModel.findById(banner.productId).exec();
         banner.productName = product ? product.title : null;
       }
     }
 
-    const total = await this.bannerModel.countDocuments(query).exec();
+    const total = await this.bannerModel.countDocuments(searchQuery).exec();
 
-    const response: AllBannerResponse = {
+    return {
       response_code: 200,
       response_data: banners,
-      total: total,
+      total,
     };
-
-    return response;
   }
 
-  async findOne(id: string) {
-    const banner = await this.bannerModel.findById(id).select('-createdAt -updatedAt -__v -status');
+  async findOne(params: OneBannerParam): Promise<OneBannerResponse> {
+    const { id } = params;
+    const banner = await this.bannerModel
+      .findById(id)
+      .select('-createdAt -updatedAt -__v -status')
+      .exec();
+
     if (!banner) {
       throw new NotFoundException('Banner not found');
     }
-  
+
     if (banner.categoryId) {
-      const category = await this.CategoryModel.findById(banner.categoryId);
+      const category = await this.categoryModel.findById(banner.categoryId).exec();
       banner.categoryName = category ? category.title : null;
     }
-  
     if (banner.productId) {
-      const product = await this.productModel.findById(banner.productId);
+      const product = await this.productModel.findById(banner.productId).exec();
       banner.productName = product ? product.title : null;
     }
-  
-    const response: OneBannerResponse = {
+
+    return {
       response_code: 200,
       response_data: banner,
     };
-  
-    return response;
   }
 
   async findlist(): Promise<TypeBannerResponse> {
     const data = {
       CATEGORY: 'CATEGORY',
       PRODUCT: 'PRODUCT',
-    }; 
-    const response: TypeBannerResponse = {
+    };
+
+    return {
       response_code: 200,
       response_data: data,
     };
-    return response;
   }
 
   async createOne(body: CreateBannerDto): Promise<CreateBannerResponse> {
-    const newBanner = new this.bannerModel(body);
-    await newBanner.save();
+    try {
+      const newBanner = new this.bannerModel(body);
+      await newBanner.save();
 
-    const response: CreateBannerResponse = {
-      response_code: 200,
-      response_data: 'Banner saved successfully',
-    };
-
-    return response;
+      return {
+        response_code: 200,
+        response_data: 'Banner saved successfully',
+      };
+    } catch (error) {
+      throw new Error('Failed to create banner: ' + error.message);
+    }
   }
 
   async updateOne(
     id: string,
-    body: UpdateBannerDto,
+    body: UpdateBodyBanner,
   ): Promise<UpdateBannerResponse> {
     const updatedBanner = await this.bannerModel
       .findByIdAndUpdate(id, body, { new: true })
@@ -117,24 +115,23 @@ export class BannersService {
       throw new NotFoundException('Banner not found or update failed');
     }
 
-    const response: UpdateBannerResponse = {
+    return {
       response_code: 200,
       response_data: 'Banner updated successfully',
     };
-
-    return response;
   }
 
-  async delete(id: string) {
+  async delete(params: DeleteBannerParam): Promise<DeleteBannerResponse> {
+    const { id } = params;
     const deletedBanner = await this.bannerModel.findByIdAndDelete(id).exec();
+
     if (!deletedBanner) {
       throw new NotFoundException('Banner not found or deletion failed');
     }
-    const response: DeleteBannerResponse = {
+
+    return {
       response_code: 200,
       response_data: 'Banner deleted successfully',
     };
-
-    return response;
   }
 }

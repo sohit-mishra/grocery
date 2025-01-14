@@ -4,35 +4,36 @@ import {
   IsUrl,
   IsBoolean,
   IsIn,
-  ValidateIf
+  IsNotEmpty,
+  IsMongoId,
 } from 'class-validator';
-
+import { Types } from 'mongoose';
 
 export class CreateBannerDto {
+  @IsNotEmpty()
   @IsString()
   title: string;
 
   @IsString()
-  @IsOptional()
-  description?: string;
+  @IsNotEmpty()
+  description: string;
 
   @IsString()
   @IsIn(['PRODUCT', 'CATEGORY'], {
-    message: 'bannerType must be either PRODUCT or CATEGORY',
+    message: 'Invalid bannerType. Allowed values: PRODUCT or CATEGORY.',
   })
   bannerType: string;
 
-  @IsString()
+  @IsMongoId()
   @IsOptional()
-  @ValidateIf((o) => !o.productId) 
-  categoryId?: string;
+  categoryId?: Types.ObjectId;
 
-  @IsString()
+  @IsMongoId()
   @IsOptional()
-  @ValidateIf((o) => !o.categoryId) 
-  productId?: string;
+  productId?: Types.ObjectId;
 
   @IsUrl()
+  @IsNotEmpty()
   imageUrl: string;
 
   @IsString()
@@ -40,10 +41,12 @@ export class CreateBannerDto {
   filePath?: string;
 
   @IsString()
+  @IsNotEmpty()
   imageId: string;
 
   @IsBoolean()
-  status: boolean;
+  @IsOptional()
+  status: boolean = true;
 
   @IsString()
   @IsOptional()
@@ -53,8 +56,6 @@ export class CreateBannerDto {
   @IsOptional()
   productName?: string;
 }
-
-
 
 export class CreateBannerResponse {
   response_code: number;

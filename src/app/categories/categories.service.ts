@@ -1,22 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Param } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CreateCategories } from './dto/create-categories.dto';
-import { UpdateCategories } from './dto/update-categories.dto';
-import { Categories } from './schema/categories.schema';
+import { CreateCategories, CreateCategoriesResponse } from './dto/create-categories.dto';
+import { UpdateBodyCategories, UpdateCategoriesParam, UpdateCategoriesResponse } from './dto/update-categories.dto';
+import { Categories } from './categories.model';
 import { SubCategory } from '@app/sub-category/schema/subCategory.schema';
 import { Deals } from '@app/deals/schema/deals.schema';
 import { StorageService } from '@core/services/storage.service';
 import {
+  AllCategoriesParam,
   AllCategoriesResponse,
-  DropdownCategoriesResponse,
-  OneCategoriesResponse,
-  CreateCategoriesResponse,
-  UpdateCategoriesResponse,
-  UpdateStatusCategoriesResponse,
+} from './dto/All-categories.dto';
+import {
+  DeleteCategoriesParam,
   DeleteCategoriesResponse,
-  ImageCategoriesResponse,
-} from './dto/response.dto';
+} from './dto/delete-categories.dto';
+import { DropdownCategoriesResponse } from './dto/DropdownCategories.dto';
+import { ImageCategoriesResponse } from './dto/ImageCategories.dto';
+import {
+  OneCategoriesParam,
+  OneCategoriesResponse,
+} from './dto/one-categories.dto';
+import {
+  UpdateStatusCategoriesParam,
+  UpdateStatusCategoriesResponse,
+  UpdateStatusCategories,
+} from './dto/UpdateStatusCategories.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -27,29 +36,21 @@ export class CategoriesService {
     private readonly storageService: StorageService,
   ) {}
 
-  async findAll(page: number = 1, limit: number = 10, search: string = ''): Promise<AllCategoriesResponse> {
+  async findAll(query: AllCategoriesParam): Promise<AllCategoriesResponse> {
+    const { page = 1, limit = 10, q = '' } = query;
     const skip = (page - 1) * limit;
-    const searchRegex = search ? new RegExp(search, 'i') : null;
-    const filter = searchRegex ? { $or: [{ name: searchRegex }, { description: searchRegex }] } : {};
+    const searchRegex = q ? new RegExp(q, 'i') : null;
+    const filter = searchRegex ? { $or: [{ title: searchRegex }, { description: searchRegex }] } : {};
 
     const [total, categories] = await Promise.all([
       this.categoriesModel.countDocuments(filter).exec(),
-      this.categoriesModel.find(filter).skip(skip).limit(limit).select('-description -filePath -imageId -__v').exec(),
+      this.categoriesModel
+        .find(filter)
+        .skip(skip)
+        .limit(limit)
+        .select('-description -filePath -imageId -__v')
+        .exec(),
     ]);
-
-    for (let category of categories) {
-      const subCategoryCount = await this.subCategoryModel.countDocuments({ categoryId: category._id }).exec();
-      const deals = await this.dealsModel.find({ categoryId: category._id }).exec();
-      const isDealAvailable = deals.length > 0;
-  
-      category.set('subCategoryCount', subCategoryCount, { strict: false });
-      category.set('isDealAvailable', isDealAvailable, { strict: false });
-  
-      if (isDealAvailable) {
-        const dealPercent = Math.max(...deals.map((deal) => deal.dealPercent || 0));
-        category.set('dealPercent', dealPercent, { strict: false });
-      }
-    }
 
     return {
       response_code: 200,
@@ -60,26 +61,20 @@ export class CategoriesService {
 
   async getDropdownList(): Promise<DropdownCategoriesResponse> {
     const categories = await this.categoriesModel.find({}, { _id: 1, title: 1, status: 1 }).exec();
-    const formattedCategories = categories.map((category) => ({
-      id: category._id.toString(),
-      name: category.title,
-      status: category.status,
-    }));
-
-    const response: DropdownCategoriesResponse = {
+    return {
       response_code: 200,
-      response_data: formattedCategories,
+      response_data: categories.map((category) => ({
+        id: category._id.toString(),
+        name: category.title,
+        status: category.status,
+      })),
     };
-
-    return response;
   }
 
-  async findOne(id: string): Promise<OneCategoriesResponse> {
+  async findOne(param: OneCategoriesParam): Promise<OneCategoriesResponse> {
+    const id = param.id;
     const category = await this.categoriesModel.findById(id).select('-__v').exec();
-
-    if (!category) {
-      throw new NotFoundException('Category not found');
-    }
+    if (!category) throw new NotFoundException('Category not found');
 
     const subCategoryCount = await this.subCategoryModel.countDocuments({ categoryId: category._id }).exec();
     const deals = await this.dealsModel.find({ categoryId: category._id }).exec();
@@ -93,12 +88,10 @@ export class CategoriesService {
       category.set('dealPercent', dealPercent, { strict: false });
     }
 
-    const response: OneCategoriesResponse = {
+    return {
       response_code: 200,
       response_data: category,
     };
-
-    return response;
   }
 
   async uploadImage(file: { buffer: Buffer; originalname: string }): Promise<ImageCategoriesResponse> {
@@ -108,7 +101,7 @@ export class CategoriesService {
         originalname: file.originalname,
       });
 
-      const response: ImageCategoriesResponse = {
+      return {
         response_code: 200,
         response_data: {
           url: imageUploadResult.fileUrl,
@@ -116,28 +109,23 @@ export class CategoriesService {
           filePath: imageUploadResult.filePath,
         },
       };
-
-      return response;
     } catch (error) {
-      throw new Error('Image upload failed');
+      throw new BadRequestException('Image upload failed: ' + error.message);
     }
   }
 
   async create(createCategoriesDto: CreateCategories): Promise<CreateCategoriesResponse> {
     const newCategory = new this.categoriesModel(createCategoriesDto);
     await newCategory.save();
-
-    const response: CreateCategoriesResponse = {
+    return {
       response_code: 200,
       response_data: 'Category saved successfully',
     };
-
-    return response;
   }
 
-  async update(id: string, updateCategoriesDto: UpdateCategories): Promise<UpdateCategoriesResponse> {
+  async update(param: UpdateCategoriesParam, updateCategoriesDto: UpdateBodyCategories): Promise<UpdateCategoriesResponse> {
     const updatedCategory = await this.categoriesModel.findByIdAndUpdate(
-      id,
+      param.id,
       updateCategoriesDto,
       { new: true },
     ).exec();
@@ -146,15 +134,14 @@ export class CategoriesService {
       throw new NotFoundException('Category not found');
     }
 
-    const response: UpdateCategoriesResponse = {
+    return {
       response_code: 200,
       response_data: 'Category updated successfully',
     };
-
-    return response;
   }
 
-  async updateStatus(id: string, status: boolean): Promise<UpdateStatusCategoriesResponse> {
+  async updateStatus(param:UpdateStatusCategoriesParam, status:UpdateStatusCategories): Promise<UpdateStatusCategoriesResponse> {
+    const id = param.id;
     const updatedCategory = await this.categoriesModel.findByIdAndUpdate(
       id,
       { status },
@@ -165,26 +152,20 @@ export class CategoriesService {
       throw new NotFoundException('Category not found');
     }
 
-    const response: UpdateStatusCategoriesResponse = {
+    return {
       response_code: 200,
       response_data: 'Category status updated successfully',
     };
-
-    return response;
   }
 
-  async delete(id: string): Promise<DeleteCategoriesResponse> {
+  async delete(param:DeleteCategoriesParam): Promise<DeleteCategoriesResponse> {
+    const {id} = param;
     const result = await this.categoriesModel.findByIdAndDelete(id).exec();
+    if (!result) throw new NotFoundException('Category not found');
 
-    if (!result) {
-      throw new NotFoundException('Category not found');
-    }
-
-    const response: DeleteCategoriesResponse = {
+    return {
       response_code: 200,
       response_data: 'Category deleted successfully',
     };
-
-    return response;
   }
 }
