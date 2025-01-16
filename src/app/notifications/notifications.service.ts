@@ -1,14 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Notifications } from './schema/notifications.schema';
-import { CreateNotificationsDto } from './dto/create-notifications.dto';
+import { Notifications } from './notifications.model';
+import { CreateNotificationsBody, CreateNotificationsResponse } from './dto/create-notifications.dto';
 import {
-  AllNotificationsResponse,
-  OneNotificationsResponse,
-  CreateNotificationsResponse,
-  ReadNotificationsResponse
-} from './dto/response.dto';
+  OneNotificationsResponse
+} from './dto/one-notification.dto';
+import { AllNotificationsQuery, AllNotificationsResponse } from './dto/All-notifications.dto';
+import { ReadNotificationsBody, ReadNotificationsResponse } from './dto/Read-notification.dto';
 
 @Injectable()
 export class NotificationsService {
@@ -17,7 +16,8 @@ export class NotificationsService {
     private readonly notificationsModel: Model<Notifications>,
   ) {}
 
-  async findAll(page: number = 1, limit: number = 10): Promise<AllNotificationsResponse> {
+  async findAll(query:AllNotificationsQuery): Promise<AllNotificationsResponse> {
+    const {page, limit} = query;
     const skip = (page - 1) * limit;
     const notifications = await this.notificationsModel
       .find()
@@ -47,13 +47,14 @@ export class NotificationsService {
     return response;
   }
 
-  async ReadOne(id: string): Promise<ReadNotificationsResponse> {
+  async ReadOne(param: ReadNotificationsBody): Promise<ReadNotificationsResponse> {
+    const { notificationId }= param;
     const notification = await this.notificationsModel
-      .findByIdAndUpdate(id, { isRead: true }, { new: true })
+      .findByIdAndUpdate(notificationId, { isRead: true }, { new: true })
       .exec();
   
     if (!notification) {
-      throw new NotFoundException(`Notification with ID ${id} not found`);
+      throw new NotFoundException(`Notification with ID ${notificationId} not found`);
     }
   
     const response: ReadNotificationsResponse = {
@@ -64,7 +65,7 @@ export class NotificationsService {
   }
   
 
-  async createOne(createNotificationsDto: CreateNotificationsDto): Promise<CreateNotificationsResponse> {
+  async createOne(createNotificationsDto: CreateNotificationsBody): Promise<CreateNotificationsResponse> {
     const { title, body } = createNotificationsDto;
   
     const newNotification = new this.notificationsModel({
@@ -82,6 +83,4 @@ export class NotificationsService {
   
     return response;
   }
-  
-  
 }

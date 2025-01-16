@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty } from 'class-validator';
 
-export class CreateNotificationsDto {
+export class CreateNotificationsBody {
   @IsString()
   @IsNotEmpty()
   title: string;
@@ -8,4 +8,9 @@ export class CreateNotificationsDto {
   @IsString()
   @IsNotEmpty()
   body: string;
+}
+
+export class CreateNotificationsResponse {
+  response_code: number;
+  response_data: string;
 }

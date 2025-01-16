@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema()
-export class Notifications extends Document {
+export class Notifications{
   @Prop({ required: true })
   title: string;
 
@@ -19,4 +19,6 @@ export class Notifications extends Document {
   notifyType: string;
 }
 
+export const Notifications_Model = 'Notifications';
 export const NotificationsSchema = SchemaFactory.createForClass(Notifications);
+export type NotificationsDocument = Document & Notifications;

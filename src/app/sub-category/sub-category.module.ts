@@ -2,14 +2,14 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SubCategoryController } from './sub-category.controller';
 import { SubCategoryService } from './sub-category.service';
-import { SubCategory, SubCategorySchema } from './schema/subCategory.schema';
-import { Categories, CategoriesSchema } from '@app/categories/schema/categories.schema'; 
+import { SubCategory_Model, SubCategorySchema } from './subCategory.model';
+import { Categories_Model, CategoriesSchema } from '@app/categories/categories.model'; 
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: SubCategory.name, schema: SubCategorySchema },
-      { name: Categories.name, schema: CategoriesSchema },
+      { name: SubCategory_Model, schema: SubCategorySchema },
+      { name: Categories_Model, schema: CategoriesSchema },
     ]),
   ],
   controllers: [SubCategoryController],

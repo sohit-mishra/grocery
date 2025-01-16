@@ -1,16 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 @Schema()
 export class SubCategory extends Document {
-  @Prop({ required: true })
-  categoryId: string;
+  @Prop({ type: Types.ObjectId, ref: 'Categories', required: true })
+  categoryId: Types.ObjectId;
 
   @Prop({ required: true })
   title: string;
 
-  @Prop({ required: false })
-  description: string;
+  @Prop()
+  description?: string;
 
   @Prop({ default: true })
   status: boolean;
@@ -19,4 +19,6 @@ export class SubCategory extends Document {
   categoryName?: string;
 }
 
+export const SubCategory_Model = 'SubCategory';
 export const SubCategorySchema = SchemaFactory.createForClass(SubCategory);
+export type SubCategoryDocument = SubCategory & Document;

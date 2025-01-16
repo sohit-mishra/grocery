@@ -1,7 +1,6 @@
-import { IsString, IsBoolean, IsNotEmpty, IsOptional } from "class-validator";
+import { IsString, IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateSubCategoryDto {
-  
   @IsString()
   @IsNotEmpty()
   categoryId: string;
@@ -17,4 +16,9 @@ export class CreateSubCategoryDto {
   @IsBoolean()
   @IsOptional()
   status?: boolean;
+}
+
+export class CreateSubCategoryResponse {
+  response_code: number;
+  response_data: string;
 }

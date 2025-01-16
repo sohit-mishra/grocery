@@ -1,18 +1,18 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { SubCategory } from './schema/subCategory.schema';
-import { CreateSubCategoryDto } from './dto/create-subCategory.dto';
-import { UpdateSubCategoryDto } from './dto/update-subCategory.dto';
-import { Categories } from '@app/categories/schema/categories.schema';
-
-import {AllSubCategoryResponse,
-  OneSubCategoryResponse,
-  TypeSubCategoryResponse,
-  CreateSubCategoryResponse,
-  UpdateSubCategoryResponse,
+import { SubCategory } from './subCategory.model';
+import { CreateSubCategoryDto, CreateSubCategoryResponse } from './dto/create-subCategory.dto';
+import { UpdateSubCategoryBody, UpdateSubCategoryParam, UpdateSubCategoryResponse } from './dto/update-subCategory.dto';
+import { Categories } from '@app/categories/categories.model';
+import {
   StatusUpdateSubCategoryResponse,
-  DeleteSubCategoryResponse} from './dto/response.dto'
+  StatusUpdateSubCategoryParam,
+  StatusUpdateSubCategoryBody,
+} from './dto/statusupdateSubCategory.dto';
+import { AllSubCategoryQuery, AllSubCategoryResponse } from './dto/All-subCategory.dto';
+import { OneSubCategoryParam, OneSubCategoryResponse } from './dto/one-subCategory.dto';
+import { DeleteSubCategoryParam, DeleteSubCategoryResponse } from './dto/delete-subCategory.dto';
 
 @Injectable()
 export class SubCategoryService {
@@ -21,132 +21,130 @@ export class SubCategoryService {
     @InjectModel(Categories.name) private readonly CategoryModel: Model<Categories>,
   ) {}
 
-  async findAll(
-    page: number,
-    limit: number,
-    search: string,
-  ): Promise<AllSubCategoryResponse> {
+
+  async findAll(queryParams: AllSubCategoryQuery): Promise<AllSubCategoryResponse> {
+    const { page, limit, q: search } = queryParams;
+
     if (page <= 0 || limit <= 0) {
       throw new BadRequestException('Page and limit must be positive integers');
     }
-  
+
     const skip = (page - 1) * limit;
-  
-    const query = search
-      ? { title: { $regex: search, $options: 'i' } }
-      : {};
-  
+    const filterQuery = search ? { title: { $regex: search, $options: 'i' } } : {};
+
     const subCategories = await this.subCategoryModel
-      .find(query)
+      .find(filterQuery)
       .skip(skip)
       .limit(limit)
       .select('-__v')
       .exec();
-  
-    const total = await this.subCategoryModel.countDocuments(query).exec();
-  
+
+    const total = await this.subCategoryModel.countDocuments(filterQuery).exec();
+
     for (const subCategory of subCategories) {
       if (subCategory.categoryId) {
         const category = await this.CategoryModel.findById(subCategory.categoryId).exec();
         subCategory.categoryName = category ? category.title : null;
       }
     }
-  
-    const response: AllSubCategoryResponse = {
+
+    return {
       response_code: 200,
       response_data: subCategories,
       total: total,
     };
-  
-    return response;
   }
-  
 
-  async findType(id: string): Promise<OneSubCategoryResponse> {
+  async findType(param: OneSubCategoryParam): Promise<OneSubCategoryResponse> {
+    const { id } = param;
     const subCategory = await this.subCategoryModel.findById(id).select('-__v').exec();
-  
+
     if (!subCategory) {
       throw new NotFoundException(`SubCategory with ID ${id} not found`);
     }
-  
-    const response: OneSubCategoryResponse = {
+
+    return {
       response_code: 200,
-      response_data:subCategory
-      
+      response_data: subCategory,
     };
-  
-    return response;
   }
-  
 
 
-  async findOne(id: string):Promise<OneSubCategoryResponse> {
+  async findOne(param: OneSubCategoryParam): Promise<OneSubCategoryResponse> {
+    const { id } = param;
     const subCategory = await this.subCategoryModel.findById(id).select('-__v').exec();
+
     if (!subCategory) {
       throw new NotFoundException(`SubCategory with ID ${id} not found`);
     }
 
-    const response: OneSubCategoryResponse={
-      response_code:200,
-      response_data:subCategory
-    }
-
-    return response
+    return {
+      response_code: 200,
+      response_data: subCategory,
+    };
   }
 
-  async create(createSubCategoryDto: CreateSubCategoryDto):Promise<CreateSubCategoryResponse> {
+  async create(createSubCategoryDto: CreateSubCategoryDto): Promise<CreateSubCategoryResponse> {
     const newSubCategory = new this.subCategoryModel(createSubCategoryDto);
     await newSubCategory.save();
-    const response: CreateSubCategoryResponse={
-      response_code:200,
-      response_data:"Subcategory saved succesfully"
-    }
 
-    return response
+    return {
+      response_code: 200,
+      response_data: 'Subcategory saved successfully',
+    };
   }
 
-  async update(id: string, updateSubCategoryDto: UpdateSubCategoryDto):Promise<UpdateSubCategoryResponse> {
+  async update(
+    param: UpdateSubCategoryParam,
+    updateSubCategoryDto: UpdateSubCategoryBody,
+  ): Promise<UpdateSubCategoryResponse> {
+    const { id } = param;
     const updatedSubCategory = await this.subCategoryModel
       .findByIdAndUpdate(id, updateSubCategoryDto, { new: true })
       .exec();
+
     if (!updatedSubCategory) {
       throw new NotFoundException(`SubCategory with ID ${id} not found`);
     }
 
-    const response: UpdateSubCategoryResponse={
-      response_code:200,
-      response_data:"Sub Category Update Successfully"
-    }
-
-    return response
+    return {
+      response_code: 200,
+      response_data: 'Sub Category updated successfully',
+    };
   }
 
-  async StatusUpdate(id: string, status: boolean):Promise<StatusUpdateSubCategoryResponse> {
+  async updateStatus(
+    param: StatusUpdateSubCategoryParam,
+    updateStatusBody: StatusUpdateSubCategoryBody,
+  ): Promise<StatusUpdateSubCategoryResponse> {
+    const { id } = param;
+    const { status } = updateStatusBody;
+
     const updatedSubCategory = await this.subCategoryModel
-      .findByIdAndUpdate(id,  { status }, { new: true })
+      .findByIdAndUpdate(id, { status }, { new: true })
       .exec();
+
     if (!updatedSubCategory) {
       throw new NotFoundException(`SubCategory with ID ${id} not found`);
     }
 
-    const response: StatusUpdateSubCategoryResponse={
-      response_code:200,
-      response_data:"Sub Category Update Successfully"
-    }
-
-    return response
+    return {
+      response_code: 200,
+      response_data: 'Sub Category status updated successfully',
+    };
   }
 
-  async remove(id: string):Promise<DeleteSubCategoryResponse> {
+  async remove(param: DeleteSubCategoryParam): Promise<DeleteSubCategoryResponse> {
+    const { id } = param;
     const deletedSubCategory = await this.subCategoryModel.findByIdAndDelete(id).exec();
+
     if (!deletedSubCategory) {
       throw new NotFoundException(`SubCategory with ID ${id} not found`);
     }
-    const response: DeleteSubCategoryResponse={
-      response_code:200,
-      response_data:"Sub Category deleted Successfully"
-    }
 
-    return response
+    return {
+      response_code: 200,
+      response_data: 'Sub Category deleted successfully',
+    };
   }
 }
