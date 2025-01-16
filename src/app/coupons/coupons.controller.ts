@@ -7,67 +7,64 @@ import {
   Body,
   Query,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { CouponsService } from './coupons.service';
-import { CreateCouponDto } from './dto/create-coupon.dto';
-import { UpdateCouponDto } from './dto/update-coupon.dto';
-import {
-  AllCouponResponse,
-  OneCouponResponse,
-  CreateCouponResponse,
-  UpdateCouponResponse,
-  UpdateStatusCouponResponse,
-  DeleteCouponResponse,
-} from './dto/response.dto';
+import { AllCouponQuery, AllCouponResponse } from './dto/All-coupon.dto';
+import { CreateCouponDto, CreateCouponResponse } from './dto/create-coupon.dto';
+import { UpdateCouponParam, UpdateCouponBody, UpdateCouponResponse } from './dto/update-coupon.dto';
+import { UpdateStatusCouponBody, UpdateStatusCouponParam, UpdateStatusCouponResponse } from './dto/updateStatus.coupon.dto';
+import { DeleteCouponParam, DeleteCouponResponse } from './dto/delete-coupon.dto';
+import { OneCouponResponse, OneCouponParam } from './dto/one-coupon.dto';
+import { Roles } from '@core/decorators/roles.decorator';
+import { ROLE } from '@app/users/users.model';
+import { JwtAuthGuard } from '@core/guards/auth.guard';
+import { RolesGuard } from '@core/guards/roles.guard';
+
 
 @Controller('coupons/admin')
 export class CouponsController {
   constructor(private readonly couponsService: CouponsService) {}
 
   @Get('/list')
-  async findAll(
-    @Query('page') page: string = '1',
-    @Query('limit') limit: string = '10',
-    @Query('q') search: string = '',
-  ): Promise<AllCouponResponse> {
-    const pageNumber = parseInt(page, 10) || 1;
-    const limitNumber = parseInt(limit, 10) || 10;
-
-    return await this.couponsService.findAll(pageNumber, limitNumber, search);
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  async findAll(@Query() query: AllCouponQuery): Promise<AllCouponResponse> {
+    return await this.couponsService.findAll(query);
   }
 
   @Get('/detail/:id')
-  async findOne(@Param('id') id: string): Promise<OneCouponResponse> {
-    return await this.couponsService.findOne(id);
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  async findOne(@Param() param: OneCouponParam): Promise<OneCouponResponse> {
+    return await this.couponsService.findOne(param);
   }
 
   @Post('/create')
-  async createOne(
-    @Body() createCouponDto: CreateCouponDto,
-  ): Promise<CreateCouponResponse> {
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  async create(@Body() createCouponDto: CreateCouponDto): Promise<CreateCouponResponse> {
     return await this.couponsService.createOne(createCouponDto);
   }
 
   @Put('/update/:id')
-  async updateOne(
-    @Param('id') id: string,
-    @Body() updateCouponDto: UpdateCouponDto,
-  ): Promise<UpdateCouponResponse> {
-    return await this.couponsService.updateOne(id, updateCouponDto);
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  async update(@Param() param: UpdateCouponParam, @Body() update: UpdateCouponBody): Promise<UpdateCouponResponse> {
+    return await this.couponsService.updateOne(param, update);
   }
 
-  @Put('status-update/:id')
-  async updateStatus(
-    @Param('id') id: string,
-    @Body() statusDto: { status: boolean },
-  ): Promise<UpdateStatusCouponResponse> {
-    const { status } = statusDto;
-
-    return await this.couponsService.updateStatus(id, status);
+  @Put('/update-status/:id')
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  async updateStatus(@Param() param: UpdateStatusCouponParam, @Body() statusDto: UpdateStatusCouponBody): Promise<UpdateStatusCouponResponse> {
+    return await this.couponsService.updateStatus(param, statusDto);
   }
 
   @Delete('/delete/:id')
-  async deleteOne(@Param('id') id: string): Promise<DeleteCouponResponse> {
-    return await this.couponsService.deleteOne(id);
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  async delete(@Param() param: DeleteCouponParam): Promise<DeleteCouponResponse> {
+    return await this.couponsService.deleteOne(param);
   }
 }

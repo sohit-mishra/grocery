@@ -3,21 +3,21 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
 import {
-  SubCategory,
+  SubCategory_Model,
   SubCategorySchema,
-} from '@app/sub-category/schema/subCategory.schema';
-import { Deals, DealsSchema } from '@app/deals/schema/deals.schema';
+} from '@app/sub-category/subCategory.model';
+import { Deals_Model, DealsSchema } from '@app/deals/deals.model';
 import {
-  Categories,
+  Categories_Model,
   CategoriesSchema,
 } from '@app/categories/categories.model';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: Categories.name, schema: CategoriesSchema },
-      { name: Deals.name, schema: DealsSchema },
-      { name: SubCategory.name, schema: SubCategorySchema },
+      { name: Categories_Model, schema: CategoriesSchema },
+      { name: Deals_Model, schema: DealsSchema },
+      { name: SubCategory_Model, schema: SubCategorySchema },
     ]),
   ],
   controllers: [CategoriesController],

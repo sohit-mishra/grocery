@@ -6,68 +6,97 @@ import {
   Post,
   Param,
   Body,
-  Query
+  Query,
+  UseGuards,
 } from '@nestjs/common';
-import { CreateDealsDto } from './dto/create-deals.dto';
-import { UpdateDealsDto } from './dto/update-deals.dto';
-import { DealsService } from './deals.service';
 import {
-  AllDealsResponse,
-  OneDealsResponse,
+  CreateDealsDto,
   CreateDealsResponse,
-  TypeDealsResponse,
-  StatusUpdateDealsResponse,
+} from './dto/create-deals.dto';
+import {
+  UpdateDealParam,
+  UpdateBodyDeals,
   UpdateDealsResponse,
+} from './dto/update-deals.dto';
+import {
+  DeleteDealsParam,
   DeleteDealsResponse,
-} from './dto/response.dto';
+} from './dto/delete-deals.dto';
+import {  AllDealsQuery,
+  AllDealsResponse,
+} from './dto/All-deals.dto';
+import {
+  OneDealsParam,
+  OneDealsResponse,
+} from './dto/One-deals.dto';
+import { TypeDealsResponse } from './dto/Type-deals.dto';
+import {
+  StatusUpdateDealsBody,
+  StatusUpdateDealsParam,
+  StatusUpdateDealsResponse,
+} from './dto/UpdateStatus-deals.dto';
+import { Roles } from '@core/decorators/roles.decorator';
+import { ROLE } from '@app/users/users.model';
+import { JwtAuthGuard } from '@core/guards/auth.guard';
+import { RolesGuard } from '@core/guards/roles.guard';
+import { DealsService } from './deals.service';
 
-@Controller('deals/admin/')
+@Controller('deals/admin')
 export class DealsController {
   constructor(private readonly dealsService: DealsService) {}
 
   @Get('list')
-  async findAll(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-    @Query('q') search: string = '',
-  ): Promise<AllDealsResponse> {
-    return await this.dealsService.findAll({ page, limit, search });
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async findAll(@Query() query: AllDealsQuery): Promise<AllDealsResponse> {
+    return await this.dealsService.findAll(query);
   }
 
   @Get('detail/:id')
-  async findOne(@Param('id') id: string): Promise<OneDealsResponse> {
-    return await this.dealsService.findOne(id);
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async findOne(@Param() param: OneDealsParam): Promise<OneDealsResponse> {
+    return await this.dealsService.findOne(param);
   }
 
   @Get('type/list')
-  async findlist(): Promise<TypeDealsResponse> {
-    return await this.dealsService.findlist();
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async findList(): Promise<TypeDealsResponse> {
+    return await this.dealsService.findList();
   }
 
   @Post('create')
-  async createOne(@Body() createDealsDto: CreateDealsDto):Promise<CreateDealsResponse> {
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async createOne(@Body() createDealsDto: CreateDealsDto): Promise<CreateDealsResponse> {
     return await this.dealsService.createOne(createDealsDto);
   }
 
   @Put('update/:id')
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   async updateOne(
-    @Param('id') id: string,
-    @Body() updateDealsDto: UpdateDealsDto,
-  ):Promise<UpdateDealsResponse> {
-    return await this.dealsService.updateOne(id, updateDealsDto);
+    @Param() param: UpdateDealParam,
+    @Body() update: UpdateBodyDeals,
+  ): Promise<UpdateDealsResponse> {
+    return await this.dealsService.updateOne(param, update);
   }
 
-  @Put('/status-update/:id')
+  @Put('status-update/:id')
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   async updateStatus(
-    @Param('id') id: string,
-    @Body() statusDto: { status: boolean },
-  ):Promise<StatusUpdateDealsResponse> {
-    const { status } = statusDto;
-    return await this.dealsService.updateStatus(id, status);
+    @Param() param: StatusUpdateDealsParam,
+    @Body() statusDto: StatusUpdateDealsBody,
+  ): Promise<StatusUpdateDealsResponse> {
+    return await this.dealsService.updateStatus(param, statusDto);
   }
 
   @Delete('delete/:id')
-  async deleteOne(@Param('id') id: string):Promise<DeleteDealsResponse> {
-    return await this.dealsService.deleteOne(id);
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async deleteOne(@Param() param: DeleteDealsParam): Promise<DeleteDealsResponse> {
+    return await this.dealsService.deleteOne(param);
   }
 }

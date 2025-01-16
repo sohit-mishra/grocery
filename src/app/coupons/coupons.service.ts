@@ -1,31 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Coupons } from './schema/coupons.schema';
-import { CreateCouponDto } from './dto/create-coupon.dto';
-import { UpdateCouponDto } from './dto/update-coupon.dto';
-import {
-  AllCouponResponse,
-  OneCouponResponse,
-  CreateCouponResponse,
-  UpdateCouponResponse,
-  UpdateStatusCouponResponse,
-  DeleteCouponResponse,
-} from './dto/response.dto';
+import { COUPONS_MODEL, CouponsDocument } from './coupons.model';
+import { AllCouponQuery, AllCouponResponse } from './dto/All-coupon.dto';
+import { OneCouponParam, OneCouponResponse } from './dto/one-coupon.dto';
+import { CreateCouponDto, CreateCouponResponse } from './dto/create-coupon.dto';
+import { UpdateCouponParam, UpdateCouponBody, UpdateCouponResponse } from './dto/update-coupon.dto';
+import { DeleteCouponParam, DeleteCouponResponse } from './dto/delete-coupon.dto';
+import { UpdateStatusCouponBody, UpdateStatusCouponParam, UpdateStatusCouponResponse } from './dto/updateStatus.coupon.dto';
 
 @Injectable()
 export class CouponsService {
   constructor(
-    @InjectModel(Coupons.name) private readonly couponsModel: Model<Coupons>,
+    @InjectModel(COUPONS_MODEL) private readonly couponsModel: Model<CouponsDocument>,
   ) {}
 
-  async findAll(
-    page: number,
-    limit: number,
-    search: string,
-  ): Promise<AllCouponResponse> {
+  async findAll(query: AllCouponQuery): Promise<AllCouponResponse> {
+    const { page, limit, q } = query;
     const skip = (page - 1) * limit;
-    const filter = search ? { couponCode: { $regex: search, $options: 'i' } } : {};
+    const filter = q ? { couponCode: { $regex: q, $options: 'i' } } : {};
 
     const coupons = await this.couponsModel
       .find(filter)
@@ -35,93 +28,68 @@ export class CouponsService {
       .exec();
     const total = await this.couponsModel.countDocuments(filter).exec();
 
-    const response: AllCouponResponse = {
+    return {
       response_code: 200,
       response_data: coupons,
       total,
     };
-
-    return response;
   }
 
-  async findOne(id: string): Promise<OneCouponResponse> {
-    const coupon = await this.couponsModel.findById(id).select('-status -__v').exec();
+  async findOne(param:OneCouponParam): Promise<OneCouponResponse> {
+    const coupon = await this.couponsModel.findById(param.id).select('-status -__v').exec();
     if (!coupon) {
-      throw new NotFoundException(`Coupon with ID ${id} not found`);
+      throw new NotFoundException(`Coupon with ID ${param.id} not found`);
     }
 
-    const response: OneCouponResponse = {
+    return {
       response_code: 200,
       response_data: coupon,
     };
-
-    return response;
   }
 
-  async createOne(
-    createCouponDto: CreateCouponDto,
-  ): Promise<CreateCouponResponse> {
+  async createOne(createCouponDto: CreateCouponDto): Promise<CreateCouponResponse> {
     const coupon = new this.couponsModel(createCouponDto);
     await coupon.save();
 
-    const response: CreateCouponResponse = {
+    return {
       response_code: 200,
-      response_data: 'Coupon Saved Sucessfully',
+      response_data: 'Coupon Saved Successfully',
     };
-
-    return response;
   }
 
-  async updateOne(
-    id: string,
-    updateCouponDto: UpdateCouponDto,
-  ): Promise<UpdateCouponResponse> {
-    const updatedCoupon = await this.couponsModel
-      .findByIdAndUpdate(id, updateCouponDto, { new: true })
-      .exec();
+  async updateOne(param: UpdateCouponParam, updateCouponDto: UpdateCouponBody): Promise<UpdateCouponResponse> {
+    const updatedCoupon = await this.couponsModel.findByIdAndUpdate(param.id, updateCouponDto, { new: true }).exec();
     if (!updatedCoupon) {
-      throw new NotFoundException(`Coupon with ID ${id} not found`);
+      throw new NotFoundException(`Coupon with ID ${param.id} not found`);
     }
 
-    const response: UpdateCouponResponse = {
+    return {
       response_code: 200,
-      response_data: 'Coupon Update Sucessfully',
+      response_data: 'Coupon Updated Successfully',
     };
-
-    return response;
   }
 
-  async updateStatus(
-    id: string,
-    status: boolean,
-  ): Promise<UpdateStatusCouponResponse> {
-    const updatedCoupon = await this.couponsModel
-      .findByIdAndUpdate(id, { status }, { new: true })
-      .exec();
-
+  async updateStatus(param: UpdateStatusCouponParam, status: UpdateStatusCouponBody): Promise<UpdateStatusCouponResponse> {
+    const updatedCoupon = await this.couponsModel.findByIdAndUpdate(param.id, { status: status.status }, { new: true }).exec();
     if (!updatedCoupon) {
-      throw new NotFoundException(`Coupon with ID ${id} not found`);
+      throw new NotFoundException(`Coupon with ID ${param.id} not found`);
     }
 
-    const response: UpdateStatusCouponResponse = {
+    return {
       response_code: 200,
-      response_data: 'Coupon Update Successfully',
+      response_data: 'Coupon Status Updated Successfully',
     };
-
-    return response;
   }
 
-  async deleteOne(id: string): Promise<DeleteCouponResponse> {
-    const deletedCoupon = await this.couponsModel.findByIdAndDelete(id).exec();
+  async deleteOne(param: DeleteCouponParam): Promise<DeleteCouponResponse> {
+    const deletedCoupon = await this.couponsModel.findByIdAndDelete(param.id).exec();
     if (!deletedCoupon) {
-      throw new NotFoundException(`Coupon with ID ${id} not found`);
+      throw new NotFoundException(`Coupon with ID ${param.id} not found`);
     }
 
-    const response: DeleteCouponResponse = {
+    return {
       response_code: 200,
-      response_data: 'Coupon Delete Successfully',
+      response_data: 'Coupon Deleted Successfully',
     };
-
-    return response;
   }
 }

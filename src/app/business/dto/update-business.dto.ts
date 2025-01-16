@@ -1,4 +1,34 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateBussinessDto } from './create-business.dto';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsOptional,
+  IsPhoneNumber,
+} from 'class-validator';
 
-export class UpdateBusinessDto extends PartialType(CreateBussinessDto) {}
+export class UpdateBodyBusiness {
+  @IsString()
+  @IsNotEmpty()
+  storeName?: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  officeLocation?: string;
+
+  @IsPhoneNumber()
+  @IsNotEmpty()
+  phoneNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  address?: string;
+}
+
+export class UpdateBussinessResponse {
+  response_code: number;
+  response_data: string;
+}

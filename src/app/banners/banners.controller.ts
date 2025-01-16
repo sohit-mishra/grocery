@@ -62,7 +62,7 @@ export class BannersController {
     @Param() param: UpdateBannerParam,
     @Body() body: UpdateBodyBanner,
   ): Promise<UpdateBannerResponse> {
-    return await this.bannerService.updateOne(param.id, body);
+    return await this.bannerService.updateOne(param, body);
   }
 
   @Delete('/delete/:id')

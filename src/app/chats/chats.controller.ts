@@ -1,81 +1,45 @@
-import { Controller, Get, HttpStatus, Param, Query, Post, Body, Put, Delete, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  Post,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { ChatsService } from './chats.service';
-import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
+import { CreateChatDto, CreateChatsResponse } from './dto/create-chat.dto';
+import { OneChatsResponse, OneChartParam } from './dto/one-chat.dto';
+import { Roles } from '@core/decorators/roles.decorator';
+import { ROLE } from '@app/users/users.model';
+import { JwtAuthGuard } from '@core/guards/auth.guard';
+import { AllChatsQuery, AllChatsResponse } from './dto/all-chat.dto';
+import { RolesGuard } from '@core/guards/roles.guard';
 
 @Controller('chats/admin')
 export class ChatsController {
   constructor(private readonly chatsService: ChatsService) {}
 
-  @Get('/group')
-  async findAll(@Query('page') page: string, @Query('limit') limit: string) {
-    try {
-      const chats = await this.chatsService.findAll(page, limit);
-      return {
-        response_code: HttpStatus.OK,
-        response_data: chats,
-      };
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to retrieve chats');
-    }
+  @Get('/list')
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  findAll(@Query() query: AllChatsQuery): Promise<AllChatsResponse> {
+    return this.chatsService.findAll(query);
   }
 
-  @Get('/:chatId')
-  async findOne(@Param('chatId') chatId: string) {
-    try {
-      const chat = await this.chatsService.findOne(chatId);
-      if (!chat) {
-        throw new NotFoundException(`Chat with ID ${chatId} not found`);
-      }
-      return {
-        response_code: HttpStatus.OK,
-        response_data: chat,
-      };
-    } catch (error) {
-      throw error instanceof NotFoundException ? error : new InternalServerErrorException('Failed to retrieve chat');
-    }
+ 
+  @Get('/:id')
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  findOne(@Param() param: OneChartParam): Promise<OneChatsResponse> {
+    return this.chatsService.findOne(param);
   }
 
-  @Post()
-  async create(@Body() createChatDto: CreateChatDto) {
-    try {
-      const newChat = await this.chatsService.create(createChatDto);
-      return {
-        response_code: HttpStatus.CREATED,
-        response_data: "Success saved", 
-      };
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to create chat');
-    }
-  }
 
-  @Put('/:chatId')
-  async update(@Param('chatId') chatId: string, @Body() updateChatDto: UpdateChatDto) {
-    try {
-      const updatedChat = await this.chatsService.update(chatId, updateChatDto);
-      if (!updatedChat) {
-        throw new NotFoundException(`Chat with ID ${chatId} not found`);
-      }
-      return {
-        response_code: HttpStatus.OK,
-        response_data: "Successfully updated",
-      };
-    } catch (error) {
-      throw error instanceof NotFoundException ? error : new InternalServerErrorException('Failed to update chat');
-    }
-  }
-
-  @Delete('/:chatId')
-  async remove(@Param('chatId') chatId: string) {
-    try {
-      const deletedChat = await this.chatsService.remove(chatId);
-     
-      return {
-        response_code: HttpStatus.OK,
-        response_data: "Chat Deleted Successfully",
-      };
-    } catch (error) {
-      throw error instanceof NotFoundException ? error : new InternalServerErrorException('Failed to delete chat');
-    }
+  @Post('/create')
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  create(@Body() createChatDto: CreateChatDto): Promise<CreateChatsResponse> {
+    return this.chatsService.create(createChatDto);
   }
 }

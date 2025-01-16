@@ -1,5 +1,10 @@
 import { IsString, IsNumber, IsOptional, IsEnum, IsInt } from 'class-validator';
 
+export enum CouponType {
+  PERCENTAGE = 'PERCENTAGE',
+  AMOUNT = 'AMOUNT',
+}
+
 export class CreateCouponDto {
   @IsString()
   description: string;
@@ -19,6 +24,11 @@ export class CreateCouponDto {
   @IsInt()
   expiryDate: number;
 
-  @IsEnum(['PERCENTAGE', 'AMOUNT'])
-  couponType: string;
+  @IsEnum(CouponType)
+  couponType: CouponType;
+}
+
+export class CreateCouponResponse {
+  response_code: number;
+  response_data: string;
 }

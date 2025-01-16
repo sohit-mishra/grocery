@@ -4,8 +4,8 @@ import { Model } from 'mongoose';
 import { CreateCategories, CreateCategoriesResponse } from './dto/create-categories.dto';
 import { UpdateBodyCategories, UpdateCategoriesParam, UpdateCategoriesResponse } from './dto/update-categories.dto';
 import { Categories } from './categories.model';
-import { SubCategory } from '@app/sub-category/schema/subCategory.schema';
-import { Deals } from '@app/deals/schema/deals.schema';
+import { SubCategory } from '@app/sub-category/subCategory.model';
+import { Deals } from '@app/deals/deals.model';
 import { StorageService } from '@core/services/storage.service';
 import {
   AllCategoriesParam,

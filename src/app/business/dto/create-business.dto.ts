@@ -4,10 +4,9 @@ import {
   IsEmail,
   IsOptional,
   IsPhoneNumber,
-  IsObject,
 } from 'class-validator';
 
-export class CreateBussinessDto {
+export class CreateBodyBusiness {
   @IsString()
   @IsNotEmpty()
   storeName: string;
@@ -26,5 +25,10 @@ export class CreateBussinessDto {
 
   @IsString()
   @IsOptional()
-  address?:string;
+  address?: string;
+}
+
+export class CreateBusinessResponse {
+  response_code: number;
+  response_data: string;
 }

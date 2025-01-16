@@ -1,26 +1,40 @@
-import { Body, Controller, Get, HttpStatus, Put } from '@nestjs/common';
-import { UpdateBusinessDto } from './dto/update-business.dto';
+import { Body, Controller, Get, Put,Post, UseGuards } from '@nestjs/common';
+import { UpdateBodyBusiness, UpdateBussinessResponse } from './dto/update-business.dto';
 import { BusinessService } from './business.service';
+import { AllBusinessResponse } from './dto/AllBusiness.dto';
+import { Roles } from '@core/decorators/roles.decorator';
+import { ROLE } from '@app/users/users.model';
+import { JwtAuthGuard } from '@core/guards/auth.guard';
+import { RolesGuard } from '@core/guards/roles.guard';
+import { CreateBodyBusiness, CreateBusinessResponse } from './dto/create-business.dto';
 
-@Controller('business/admin/')
+@Controller('business/admin')
 export class BusinessController {
   constructor(private readonly businessService: BusinessService) {}
 
   @Get('detail')
-  async findAll() {
-    const getBusiness = await this.businessService.findAll();
-    return {
-      response_code: HttpStatus.OK,
-      response_data: getBusiness,
-    };
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  async findAll(): Promise<AllBusinessResponse> {
+    return this.businessService.findAll();
+  }
+
+  @Post('create')
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  async CreateOne(
+    @Body() create: CreateBodyBusiness,
+  ): Promise<
+  CreateBusinessResponse> {
+    return this.businessService.CreateOne(create);
   }
 
   @Put('update')
-  async updateOne(@Body() updateBusinessDto: UpdateBusinessDto) {
-    const updatedBusiness = await this.businessService.updateOne(updateBusinessDto);
-    return {
-      response_code: HttpStatus.OK,
-      response_data: 'Business updated successfully',
-    };
+  @Roles(ROLE.OWNER)
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  async updateOne(
+    @Body() update: UpdateBodyBusiness,
+  ): Promise<UpdateBussinessResponse> {
+    return this.businessService.updateOne(update);
   }
 }

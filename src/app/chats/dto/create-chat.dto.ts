@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class CreateChatDto {
   @IsString()
@@ -7,9 +7,14 @@ export class CreateChatDto {
 
   @IsString()
   @IsNotEmpty()
-  sentBy: string; 
+  sentBy: string;
 
   @IsString()
   @IsNotEmpty()
   userId: string;
+}
+
+export class CreateChatsResponse {
+  response_code: number;
+  response_data: string;
 }

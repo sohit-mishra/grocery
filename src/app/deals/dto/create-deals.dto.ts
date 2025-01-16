@@ -11,10 +11,10 @@ export class CreateDealsDto {
   categoryId?: string;
 
   @IsNumber()
-  dealPercent: number;
+  dealPercent?: number;
 
   @IsEnum(DealType)
-  dealType: DealType;
+  dealType?: DealType;
 
   @IsString()
   @IsOptional()
@@ -26,10 +26,10 @@ export class CreateDealsDto {
 
   @IsString()
   @IsOptional()
-  imageId: string;
+  imageId?: string;
 
   @IsUrl()
-  imageUrl: string;
+  imageUrl?: string;
 
   @IsString()
   @IsOptional()
@@ -44,11 +44,16 @@ export class CreateDealsDto {
   products?: any[]; 
 
   @IsBoolean()
-  status: boolean;
+  status?: boolean;
 
   @IsString()
-  title: string;
+  title?: string;
 
   @IsBoolean()
-  topDeal: boolean;
+  topDeal?: boolean;
+}
+
+export class CreateDealsResponse {
+  response_code: number;
+  response_data: string;
 }

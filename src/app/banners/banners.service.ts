@@ -104,9 +104,10 @@ export class BannersService {
   }
 
   async updateOne(
-    id: string,
+    param:UpdateBannerParam,
     body: UpdateBodyBanner,
   ): Promise<UpdateBannerResponse> {
+    const {id}=param;
     const updatedBanner = await this.bannerModel
       .findByIdAndUpdate(id, body, { new: true })
       .exec();

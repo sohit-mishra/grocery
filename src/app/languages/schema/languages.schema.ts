@@ -9,11 +9,26 @@ export class Languages extends Document {
   @Prop({ required: true })
   languageName: string;
 
-  @Prop({ default: false })
-  isDefault: boolean;
+  @Prop({ type: Number, default: 0 }) 
+  isDefault: number;
 
-  @Prop({ default: true })
-  isActive: boolean;
+  @Prop({ type: Object, default: {} })
+  backendJson: Record<string, string>;
+
+  @Prop({ type: Object, default: {} })
+  cmsJson: Record<string, string>;
+
+  @Prop({ type: Object, default: {} })
+  deliveryAppJson: Record<string, string>;
+
+  @Prop({ type: Object, default: {} })
+  mobAppJson: Record<string, string>;
+
+  @Prop({ type: Object, default: {} })
+  webJson: Record<string, string>;
+
+  @Prop({ type: Number, default: 1 }) 
+  status: number;
 }
 
 export const LanguagesSchema = SchemaFactory.createForClass(Languages);

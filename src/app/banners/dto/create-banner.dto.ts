@@ -38,7 +38,7 @@ export class CreateBannerDto {
 
   @IsString()
   @IsOptional()
-  filePath?: string;
+  filePath: string;
 
   @IsString()
   @IsNotEmpty()
